@@ -8,14 +8,13 @@ module.exports = function(cuk){
   const { _, fs, path, helper, debug } = cuk.lib
   const { app, mount } = cuk.pkg.http.lib
   const pkg = cuk.pkg[pkgId]
-  const staticDir = path.join(cuk.dir.root, 'cuks', pkgId)
-  const trace = debug(`cuk:${pkgId}`)
+  const staticRootDir = path.join(cuk.dir.root, 'cuks', pkgId)
 
   const serve = function(dir, options) {
     return koaStatic(dir, helper.makeOptions(pkgId, 'options', options))
   }
 
-  trace('Initializing...')
+  pkg.trace('Initializing...')
   pkg.lib = {
     serve: serve
   }
@@ -30,62 +29,41 @@ module.exports = function(cuk){
         v = _v
       }
       if (!fs.existsSync(v)) return
-      let mp = pkg.cfg.mount + (pid ? `/${pid}` : '') + k
+      let mp = pkg.cfg.mountStatic + (pid ? `${pid === '/' ? '':pid}` : '') + k
       if ((pkg.cfg.disabled || []).indexOf(mp) > -1) {
-        trace(`Disabled » ${mp} -> ${helper.makeRelDir(v, cuk.dir.root)}`)
+        pkg.trace(`Disabled » ${mp} -> ${helper.makeRelDir(v, cuk.dir.root)}`)
         return
       }
       app.use(mount(mp, serve(v)))
-      trace(`Enabled » ${mp} -> ${helper.makeRelDir(v, cuk.dir.root)}`)
+
+      pkg.trace(`Enabled » ${mp} -> ${helper.makeRelDir(v, cuk.dir.root)}`)
     })
   }
 
   return new Promise((resolve, reject) => {
-    // 1. favicon
     let faviconDef = path.join(pkg.dir, 'cuks', pkgId, 'favicon.ico'),
-      faviconFile = path.join(staticDir, 'favicon.ico')
+      faviconFile = path.join(staticRootDir, 'favicon.ico')
     if (!fs.existsSync(faviconFile)) faviconFile = faviconDef
     app.use(favicon(faviconFile))
-    trace(`Serve » favicon.ico -> %s`, helper.makeRelDir(faviconFile))
-    // 2. app's static
-    fs.ensureDirSync(staticDir)
-    if ((pkg.cfg.disabled || []).indexOf(pkg.cfg.mount) > -1) {
-      trace(`Disabled » ${pkg.cfg.mount} -> ${helper.makeRelDir(staticDir)}`)
-    } else {
-      app.use(mount(pkg.cfg.mount, serve(staticDir)))
-      trace(`Enabled » ${pkg.cfg.mount} -> ${helper.makeRelDir(staticDir)}`)
-    }
-    // 3. any other app's static
-    helper.getFromJsOrJson(cuk.dir.root, 'cuks', pkgId)
-    .then(result => {
-      mountDir(result, cuk.dir.root)
-      return Promise.resolve(true)
+    pkg.trace(`Serve » favicon.ico -> %s`, helper.makeRelDir(faviconFile))
+    _.forOwn(cuk.pkg, (v, k) => {
+      let dir = path.join(v.dir, 'cuks', pkgId),
+        mp = `${pkg.cfg.mountStatic}${v.cfg.mount === '/' ? '' : v.cfg.mount}`
+      if (!fs.existsSync(dir)) return
+      if ((pkg.cfg.disabled || []).indexOf(mp) > -1) {
+        pkg.trace(`Disabled » ${mp} -> ${helper.makeRelDir(dir)}`)
+        return
+      }
+      app.use(mount(mp, serve(dir)))
+      pkg.trace(`Enabled » ${mp} -> ${helper.makeRelDir(dir)}`)
     })
-    .then(() => {
-      // 4. pkg's statics
-      _.forOwn(cuk.pkg, (v, k) => {
-        let dir = path.join(v.dir, 'cuks', pkgId),
-          mp = `${pkg.cfg.mount}/${k}`
-        if (!fs.existsSync(dir)) return
-        if ((pkg.cfg.disabled || []).indexOf(mp) > -1) {
-          trace(`Disabled » ${mp} -> ${helper.makeRelDir(dir)}`)
-          return
-        }
-        app.use(mount(mp, serve(dir)))
-        trace(`Enabled » ${mp} -> ${helper.makeRelDir(dir)}`)
-      })
-      return Promise.resolve(true)
-    })
-    .then(() => {
-      // 5. any other pkg's statics
-      return Promise.map(helper.getPkgs(), function(p) {
-        return new Promise((resv, rejc) => {
-          let dir = path.join(p.dir, 'cuks')
-          helper.getFromJsOrJson(dir, pkgId)
-          .then(result => {
-            mountDir(result, p.dir, p.id)
-            resv(true)
-          })
+    Promise.map(helper.getPkgs(), function(p) {
+      return new Promise((resv, rejc) => {
+        let dir = path.join(p.dir, 'cuks')
+        helper.makeConfig(dir, pkgId)
+        .then(result => {
+          mountDir(result, p.dir, p.cfg.mount)
+          resv(true)
         })
       })
     })
