@@ -29,14 +29,14 @@ module.exports = function(cuk){
         v = _v
       }
       if (!fs.existsSync(v)) return
-      let mp = pkg.cfg.mountStatic + (pid ? `${pid === '/' ? '':pid}` : '') + k
+      let mp = pkg.cfg.mountResource + (pid ? `${pid === '/' ? '':pid}` : '') + k
       if ((pkg.cfg.disabled || []).indexOf(mp) > -1) {
         pkg.trace(`Disabled » ${mp} -> ${helper('core:makeRelDir')(v, cuk.dir.root)}`)
         return
       }
       app.use(mount(mp, serve(v)))
 
-      pkg.trace(`Enabled » ${mp} -> ${helper('core:makeRelDir')(v, cuk.dir.root)}`)
+      pkg.trace(`Serve » ${mp} -> ${helper('core:makeRelDir')(v, cuk.dir.root)}`)
     })
   }
 
@@ -48,14 +48,14 @@ module.exports = function(cuk){
     pkg.trace(`Serve » favicon.ico -> %s`, helper('core:makeRelDir')(faviconFile))
     _.forOwn(cuk.pkg, (v, k) => {
       let dir = path.join(v.dir, 'cuks', pkgId, 'resource'),
-        mp = `${pkg.cfg.mountStatic}${v.cfg.mount === '/' ? '' : v.cfg.mount}`
+        mp = `${pkg.cfg.mountResource}${v.cfg.mount === '/' ? '' : v.cfg.mount}`
       if (!fs.existsSync(dir)) return
       if ((pkg.cfg.disabled || []).indexOf(mp) > -1) {
         pkg.trace(`Disabled » ${mp} -> ${helper('core:makeRelDir')(dir)}`)
         return
       }
       app.use(mount(mp, serve(dir)))
-      pkg.trace(`Enabled » ${mp} -> ${helper('core:makeRelDir')(dir)}`)
+      pkg.trace(`Serve » ${mp} -> ${helper('core:makeRelDir')(dir)}`)
     })
     Promise.map(helper('core:pkgs')(), function(p) {
       return new Promise((resv, rejc) => {
