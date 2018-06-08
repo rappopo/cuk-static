@@ -12,7 +12,7 @@ module.exports = function(cuk){
 
   fs.ensureDirSync(staticRootDir)
 
-  const serve = function(dir, options) {
+  const serve = (dir, options) => {
     return koaStatic(dir, helper('core:makeOptions')(pkgId, 'options', options))
   }
 
@@ -29,8 +29,8 @@ module.exports = function(cuk){
         v = _v
       }
       if (!fs.existsSync(v)) return
-      let mp = pkg.cfg.mountResource + (pid ? `${pid === '/' ? '':pid}` : '') + k
-      if ((pkg.cfg.disabled || []).indexOf(mp) > -1) {
+      let mp = pkg.cfg.common.mountResource + (pid ? `${pid === '/' ? '':pid}` : '') + k
+      if ((pkg.cfg.common.disabled || []).indexOf(mp) > -1) {
         pkg.trace(`Disabled » ${mp} -> ${helper('core:makeRelDir')(v, cuk.dir.root)}`)
         return
       }
@@ -48,13 +48,19 @@ module.exports = function(cuk){
     pkg.trace(`Serve » favicon.ico -> %s`, helper('core:makeRelDir')(faviconFile))
     _.forOwn(cuk.pkg, (v, k) => {
       let dir = path.join(v.dir, 'cuks', pkgId, 'resource'),
-        mp = `${pkg.cfg.mountResource}${v.cfg.mount === '/' ? '' : v.cfg.mount}`
+        mp = `${pkg.cfg.common.mountResource}${v.cfg.common.mount === '/' ? '' : v.cfg.common.mount}`
       if (!fs.existsSync(dir)) return
-      if ((pkg.cfg.disabled || []).indexOf(mp) > -1) {
+      if ((pkg.cfg.common.disabled || []).indexOf(mp) > -1) {
         pkg.trace(`Disabled » ${mp} -> ${helper('core:makeRelDir')(dir)}`)
         return
       }
-      app.use(mount(mp, serve(dir)))
+      if (mp === pkg.cfg.common.mountResource) {
+        let mws = [helper('http:composeMiddleware')(_.get(pkg.cfg, 'cuks.http.middleware', []), `${pkg.id}:*`)]
+        mws.push(serve(dir))
+        app.use(mount(mp, cuk.pkg.http.lib.compose(mws)))
+      } else {
+        app.use(mount(mp, serve(dir)))
+      }
       pkg.trace(`Serve » ${mp} -> ${helper('core:makeRelDir')(dir)}`)
     })
     Promise.map(helper('core:pkgs')(), function(p) {
@@ -62,7 +68,7 @@ module.exports = function(cuk){
         let dir = path.join(p.dir, 'cuks', pkgId)
         helper('core:makeConfig')(dir, 'resource')
         .then(result => {
-          mountDir(result, p.dir, p.cfg.mount)
+          mountDir(result, p.dir, p.cfg.common.mount)
           resv(true)
         })
       })

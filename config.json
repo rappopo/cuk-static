@@ -1,3 +1,5 @@
 {
-  "mountResource": "/assets"
+  "common": {
+    "mountResource": "/assets"
+  }
 }
