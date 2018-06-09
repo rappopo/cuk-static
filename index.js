@@ -5,6 +5,6 @@ module.exports = function(cuk) {
   return Promise.resolve({
     id: 'static',
     tag: 'boot',
-    level: 3
+    level: 8
   })
 }
