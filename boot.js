@@ -64,7 +64,7 @@ module.exports = function(cuk){
     Promise.map(helper('core:pkgs')(), function(p) {
       return new Promise((resv, rejc) => {
         let dir = path.join(p.dir, 'cuks', pkgId)
-        helper('core:makeConfig')(dir, 'resource')
+        helper('core:loadConfig')(dir, 'resource')
         .then(result => {
           mountDir(result, p.dir, '/' + p.id)
           resv(true)
