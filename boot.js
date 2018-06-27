@@ -6,7 +6,7 @@ const favicon = require('koa-favicon')
 module.exports = function(cuk){
   const pkgId = 'static'
   const { _, fs, path, helper, debug } = cuk.lib
-  const { app, mount } = cuk.pkg.http.lib
+  const { app, koaMount } = cuk.pkg.http.lib
   const pkg = cuk.pkg[pkgId]
   const staticAppDir = path.join(cuk.dir.app, 'cuks', pkgId, 'resource')
 
@@ -33,7 +33,7 @@ module.exports = function(cuk){
         helper('core:bootTrace')(`%A Disabled %K ${mp} %L ${helper('core:makeRelDir')(v, cuk.dir.app, 'ADIR:.')}`, null, null, null)
         return
       }
-      app.use(mount(mp, serve(v)))
+      app.use(koaMount(mp, serve(v)))
       helper('core:bootTrace')(`%A Enabled %K ${mp} %L ${helper('core:makeRelDir')(v, cuk.dir.app, 'ADIR:.')}`, null, null, null)
     })
   }
@@ -55,9 +55,9 @@ module.exports = function(cuk){
       if (mp === pkg.cfg.common.mount) {
         let mws = [helper('http:composeMiddleware')(_.get(pkg.cfg, 'cuks.http.middleware', []), `${pkg.id}:*`)]
         mws.push(serve(dir))
-        app.use(mount(mp, cuk.pkg.http.lib.compose(mws)))
+        app.use(koaMount(mp, cuk.pkg.http.lib.koaCompose(mws)))
       } else {
-        app.use(mount(mp, serve(dir)))
+        app.use(koaMount(mp, serve(dir)))
       }
       helper('core:bootTrace')(`%A Enabled %K ${mp} %L ${helper('core:makeRelDir')(dir, cuk.dir.app, 'ADIR:.')}`, null, null, null)
     })
