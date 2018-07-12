@@ -5,7 +5,7 @@ const favicon = require('koa-favicon')
 
 module.exports = function(cuk){
   const pkgId = 'static'
-  const { _, fs, path, helper, debug } = cuk.lib
+  const { _, fs, path, helper, debug } = cuk.pkg.core.lib
   const { app, koaMount } = cuk.pkg.http.lib
   const pkg = cuk.pkg[pkgId]
   const staticAppDir = path.join(cuk.dir.app, 'cuks', pkgId, 'resource')
@@ -64,7 +64,7 @@ module.exports = function(cuk){
     Promise.map(helper('core:pkgs')(), function(p) {
       return new Promise((resv, rejc) => {
         let dir = path.join(p.dir, 'cuks', pkgId)
-        helper('core:loadConfig')(dir, 'resource')
+        helper('core:configLoad')(dir, 'resource')
         .then(result => {
           mountDir(result, p.dir, '/' + p.id)
           resv(true)
