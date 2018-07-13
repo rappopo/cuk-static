@@ -30,11 +30,11 @@ module.exports = function(cuk){
       if (!fs.existsSync(v)) return
       let mp = pkg.cfg.common.mount + (pid ? `${pid === '/' ? '':pid}` : '') + k
       if ((pkg.cfg.common.disabled || []).indexOf(mp) > -1) {
-        helper('core:bootTrace')(`%A Disabled %K ${mp} %L ${helper('core:makeRelDir')(v, cuk.dir.app, 'ADIR:.')}`, null, null, null)
+        helper('core:bootTrace')(`|  |- Disabled => ${mp} -> ${helper('core:makeRelDir')(v, cuk.dir.app, 'ADIR:.')}`)
         return
       }
       app.use(koaMount(mp, serve(v)))
-      helper('core:bootTrace')(`%A Enabled %K ${mp} %L ${helper('core:makeRelDir')(v, cuk.dir.app, 'ADIR:.')}`, null, null, null)
+      helper('core:bootTrace')(`|  |- Enabled => ${mp} -> ${helper('core:makeRelDir')(v, cuk.dir.app, 'ADIR:.')}`)
     })
   }
 
@@ -43,13 +43,13 @@ module.exports = function(cuk){
       faviconFile = path.join(staticAppDir, 'favicon.ico')
     if (!fs.existsSync(faviconFile)) faviconFile = faviconDef
     app.use(favicon(faviconFile))
-    helper('core:bootTrace')(`%A Enabled %K favicon.ico %L %s`, helper('core:makeRelDir')(null, null, null, faviconFile))
+    helper('core:bootTrace')(`|  |- Enabled => favicon.ico -> %s ${helper('core:makeRelDir')(faviconFile)}`)
     _.forOwn(cuk.pkg, (v, k) => {
       let dir = path.join(v.dir, 'cuks', pkgId, 'resource'),
         mp = `${pkg.cfg.common.mount}${v.cfg.common.mount === '/' ? '' : ('/' + v.id)}`
       if (!fs.existsSync(dir)) return
       if ((pkg.cfg.common.disabled || []).indexOf(mp) > -1) {
-        helper('core:bootTrace')(`%A Disabled %K ${mp} %L ${helper('core:makeRelDir')(dir, cuk.dir.app, 'ADIR:.')}`, null, null, null)
+        helper('core:bootTrace')(`|  |- Disabled => ${mp} -> ${helper('core:makeRelDir')(dir, cuk.dir.app, 'ADIR:.')}`)
         return
       }
       if (mp === pkg.cfg.common.mount) {
@@ -59,7 +59,7 @@ module.exports = function(cuk){
       } else {
         app.use(koaMount(mp, serve(dir)))
       }
-      helper('core:bootTrace')(`%A Enabled %K ${mp} %L ${helper('core:makeRelDir')(dir, cuk.dir.app, 'ADIR:.')}`, null, null, null)
+      helper('core:bootTrace')(`|  |- Enabled => ${mp} -> ${helper('core:makeRelDir')(dir, cuk.dir.app, 'ADIR:.')}`)
     })
     Promise.map(helper('core:pkgs')(), function(p) {
       return new Promise((resv, rejc) => {
