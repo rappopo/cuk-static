@@ -46,7 +46,7 @@ module.exports = function(cuk){
     helper('core:trace')(`|  |- Enabled => favicon.ico -> %s ${helper('core:makeRelDir')(faviconFile)}`)
     _.forOwn(cuk.pkg, (v, k) => {
       let dir = path.join(v.dir, 'cuks', pkgId, 'resource'),
-        mp = `${pkg.cfg.common.mount}${v.cfg.common.mount === '/' ? '' : ('/' + v.id)}`
+        mp = `${pkg.cfg.common.mount}${v.cfg.common.mount === '/' ? '' : (v.cfg.common.mount || ('/' + v.id))}`
       if (!fs.existsSync(dir)) return
       if ((pkg.cfg.common.disabled || []).indexOf(mp) > -1) {
         helper('core:trace')(`|  |- Disabled => ${mp} -> ${helper('core:makeRelDir')(dir, cuk.dir.app, 'ADIR:.')}`)
