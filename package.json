@@ -9,6 +9,7 @@
   "author": "Ardhi Lukianto <ardhi@lukianto.com>",
   "license": "MIT",
   "dependencies": {
+    "holderjs": "^2.9.4",
     "koa-favicon": "^2.0.1",
     "koa-static": "^4.0.3"
   }
