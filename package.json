@@ -1,6 +1,6 @@
 {
   "name": "@rappopo/cuk-static",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Rappopo CUK Static Resource Loader",
   "main": "index.js",
   "scripts": {
@@ -8,6 +8,10 @@
   },
   "author": "Ardhi Lukianto <ardhi@lukianto.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rappopo/cuk-static.git"
+  },
   "dependencies": {
     "holderjs": "^2.9.4",
     "koa-favicon": "^2.0.1",
