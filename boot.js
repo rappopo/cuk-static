@@ -3,7 +3,7 @@
 const koaStatic = require('koa-static')
 const favicon = require('koa-favicon')
 
-module.exports = function(cuk){
+module.exports = function (cuk){
   const pkgId = 'static'
   const { _, fs, path, helper, debug } = cuk.pkg.core.lib
   const { app, koaMount } = cuk.pkg.http.lib
@@ -18,7 +18,7 @@ module.exports = function(cuk){
 
   pkg.lib.serve = serve
 
-  const mountDir = function(kv, root, pid) {
+  const mountDir = function (kv, root, pid) {
     if (_.isEmpty(kv)) return
     _.forOwn(kv, (v, k) => {
       if (!path.isAbsolute(v)) {
@@ -61,7 +61,7 @@ module.exports = function(cuk){
       }
       helper('core:trace')(`|  |- Enabled => ${mp} -> ${helper('core:makeRelDir')(dir, cuk.dir.app, 'ADIR:.')}`)
     })
-    Promise.map(helper('core:pkgs')(), function(p) {
+    Promise.map(helper('core:pkgs')(), function (p) {
       return new Promise((resv, rejc) => {
         let dir = path.join(p.dir, 'cuks', pkgId)
         helper('core:configLoad')(dir, 'resource')
