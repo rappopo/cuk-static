@@ -41,7 +41,7 @@ module.exports = function (cuk) {
       if (!fs.existsSync(item.dir)) return
       let mp = pkg.cfg.common.mount
       if (p.id !== 'app') mp += '/' + p.id
-      if (k.substr(0, 1) !== '/') k = '/' + k
+      if (k !== '' && k.substr(0, 1) !== '/') k = '/' + k
       mp += k
       if ((pkg.cfg.common.disabled || []).indexOf(mp) > -1) {
         helper('core:trace')(`|  |- Disabled => ${mp} -> ${helper('core:makeRelDir')(item.dir, cuk.dir.app, 'ADIR:.')}`)
@@ -85,7 +85,7 @@ module.exports = function (cuk) {
   return new Promise((resolve, reject) => {
     // favicon
     const faviconDef = path.join(pkg.dir, 'cuks', 'static', 'favicon.ico')
-    let faviconFile = path.join(staticAppDir, 'favicon.ico')
+    let faviconFile = path.join(cuk.dir.app, 'cuks', 'static', 'favicon.ico')
     if (!fs.existsSync(faviconFile)) faviconFile = faviconDef
     app.use(favicon(faviconFile))
     helper('core:trace')(`|  |- Enabled => favicon.ico -> %s ${helper('core:makeRelDir')(faviconFile)}`)

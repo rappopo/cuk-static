@@ -1,6 +1,6 @@
 {
   "name": "@rappopo/cuk-static",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Rappopo CUK Static Resource Loader",
   "main": "index.js",
   "scripts": {

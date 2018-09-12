@@ -1,5 +1,11 @@
 ## Changelog
 
+### 0.0.5
+
+- Bug fix: custom mount point
+- Bug fix: default public folder
+- Change location of custom favicon.ico
+
 ### 0.0.4
 
 - Standard JS
