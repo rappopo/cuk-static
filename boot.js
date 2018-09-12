@@ -3,12 +3,12 @@
 const koaStatic = require('koa-static')
 const favicon = require('koa-favicon')
 
-module.exports = function (cuk){
+module.exports = function (cuk) {
   const pkgId = 'static'
-  const { _, fs, path, helper, debug } = cuk.pkg.core.lib
+  const { _, fs, path, helper } = cuk.pkg.core.lib
   const { app, koaMount } = cuk.pkg.http.lib
   const pkg = cuk.pkg[pkgId]
-  const staticAppDir = path.join(cuk.dir.app, 'cuks', pkgId, 'resource')
+  const staticAppDir = path.join(cuk.dir.app, 'cuks', pkgId, 'public')
 
   fs.ensureDirSync(staticAppDir)
 
@@ -18,61 +18,82 @@ module.exports = function (cuk){
 
   pkg.lib.serve = serve
 
-  const mountDir = function (kv, root, pid) {
+  const mountDir = (kv, root, p) => {
     if (_.isEmpty(kv)) return
     _.forOwn(kv, (v, k) => {
-      if (!path.isAbsolute(v)) {
-        let _v = path.join(root, v)
-        if (!fs.existsSync(_v))
-          _v = path.join(cuk.dir.app, v)
-        v = _v
+      let item = _.isString(v) ? { dir: v } : v
+      if (!item.middleware) item.middleware = []
+      const tag = item.dir.substr(0, 5)
+      if (['adir:', 'ddir:', 'pdir:'].indexOf(tag) > -1) {
+        item.dir = item.dir.substr(5)
+        if (item.dir.substr(0, 1) !== '/') item.dir = '/' + item.dir
+        switch (tag) {
+          case 'adir:': item.dir = path.join(cuk.dir.app, item.dir); break
+          case 'ddir:': item.dir = path.join(cuk.dir.data, item.dir); break
+          case 'pdir:': item.dir = path.join(p.dir, item.dir); break
+        }
       }
-      if (!fs.existsSync(v)) return
-      let mp = pkg.cfg.common.mount + (pid ? `${pid === '/' ? '':pid}` : '') + k
+      if (!path.isAbsolute(item.dir)) {
+        let _v = path.join(root, item.dir)
+        if (!fs.existsSync(_v)) _v = path.join(cuk.dir.app, item.dir)
+        item.dir = _v
+      }
+      if (!fs.existsSync(item.dir)) return
+      let mp = pkg.cfg.common.mount
+      if (p.id !== 'app') mp += '/' + p.id
+      if (k.substr(0, 1) !== '/') k = '/' + k
+      mp += k
       if ((pkg.cfg.common.disabled || []).indexOf(mp) > -1) {
-        helper('core:trace')(`|  |- Disabled => ${mp} -> ${helper('core:makeRelDir')(v, cuk.dir.app, 'ADIR:.')}`)
+        helper('core:trace')(`|  |- Disabled => ${mp} -> ${helper('core:makeRelDir')(item.dir, cuk.dir.app, 'ADIR:.')}`)
         return
       }
-      app.use(koaMount(mp, serve(v)))
-      helper('core:trace')(`|  |- Enabled => ${mp} -> ${helper('core:makeRelDir')(v, cuk.dir.app, 'ADIR:.')}`)
+      if (!_.isEmpty(item.middleware)) {
+        const mws = [helper('http:composeMiddleware')(item.middleware)]
+        mws.push(serve(item.dir))
+        app.use(koaMount(mp, cuk.pkg.http.lib.koaCompose(mws)))
+      } else {
+        app.use(koaMount(mp, serve(item.dir)))
+      }
+      helper('core:trace')(`|  |- Enabled => ${mp} -> ${helper('core:makeRelDir')(item.dir, cuk.dir.app, 'ADIR:.')}`)
+    })
+  }
+
+  const doMount = (p) => {
+    return new Promise((resolve, reject) => {
+      const dir = path.join(p.dir, 'cuks', pkgId)
+      let src = {}
+      helper('core:configLoad')(dir, 'resource')
+        .then(result => {
+          if (_.isEmpty(result)) return {}
+          src = result
+          return helper('core:configExtend')(p.id, 'static', 'resource')
+        })
+        .then(result => {
+          if (!_.isEmpty(src)) {
+            src = _.merge(src, result)
+            if (fs.existsSync(path.join(p.dir, 'cuks', 'static', 'public'))) {
+              src[''] = 'pdir:/cuks/static/public'
+            }
+            mountDir(src, p.dir, p)
+          }
+          resolve(true)
+        })
+        .catch(reject)
     })
   }
 
   return new Promise((resolve, reject) => {
-    let faviconDef = path.join(pkg.dir, 'cuks', pkgId, 'resource', 'favicon.ico'),
-      faviconFile = path.join(staticAppDir, 'favicon.ico')
+    // favicon
+    const faviconDef = path.join(pkg.dir, 'cuks', 'static', 'favicon.ico')
+    let faviconFile = path.join(staticAppDir, 'favicon.ico')
     if (!fs.existsSync(faviconFile)) faviconFile = faviconDef
     app.use(favicon(faviconFile))
     helper('core:trace')(`|  |- Enabled => favicon.ico -> %s ${helper('core:makeRelDir')(faviconFile)}`)
-    _.forOwn(cuk.pkg, (v, k) => {
-      let dir = path.join(v.dir, 'cuks', pkgId, 'resource'),
-        mp = `${pkg.cfg.common.mount}${v.cfg.common.mount === '/' ? '' : (v.cfg.common.mount || ('/' + v.id))}`
-      if (!fs.existsSync(dir)) return
-      if ((pkg.cfg.common.disabled || []).indexOf(mp) > -1) {
-        helper('core:trace')(`|  |- Disabled => ${mp} -> ${helper('core:makeRelDir')(dir, cuk.dir.app, 'ADIR:.')}`)
-        return
-      }
-      if (mp === pkg.cfg.common.mount) {
-        let mws = [helper('http:composeMiddleware')(_.get(pkg.cfg, 'cuks.http.middleware', []), `${pkg.id}:*`)]
-        mws.push(serve(dir))
-        app.use(koaMount(mp, cuk.pkg.http.lib.koaCompose(mws)))
-      } else {
-        app.use(koaMount(mp, serve(dir)))
-      }
-      helper('core:trace')(`|  |- Enabled => ${mp} -> ${helper('core:makeRelDir')(dir, cuk.dir.app, 'ADIR:.')}`)
-    })
+    // resource files
     Promise.map(helper('core:pkgs')(), function (p) {
-      return new Promise((resv, rejc) => {
-        let dir = path.join(p.dir, 'cuks', pkgId)
-        helper('core:configLoad')(dir, 'resource')
-        .then(result => {
-          mountDir(result, p.dir, '/' + p.id)
-          resv(true)
-        })
-      })
+      return doMount(p)
     })
-    .then(resolve)
-    .catch(reject)
+      .then(resolve)
+      .catch(reject)
   })
-
 }

@@ -1,5 +1,11 @@
 ## Changelog
 
+### 0.0.4
+
+- Standard JS
+- Remove default folder. Using only static resource config
+- Add feature: extending static resources
+
 ### 0.0.3
 
 - Adding README.md, LICENSE.md & CHANGELOG.md

@@ -15,6 +15,7 @@ $ npm install --save @rappopo/cuk-static
 
 ## Links
 
+* [Wiki](https://github.com/rappopo/cuk-static/wiki)
 * [Documentation](https://docs.rappopo.com/cuk/)
 * [Changelog](CHANGELOG.md)
 
