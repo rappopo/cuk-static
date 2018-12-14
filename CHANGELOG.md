@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.0.6
+
+- Breaking change: config root no longer use common & cuks.
+
 ### 0.0.5
 
 - Bug fix: custom mount point

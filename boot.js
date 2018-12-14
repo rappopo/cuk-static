@@ -39,11 +39,11 @@ module.exports = function (cuk) {
         item.dir = _v
       }
       if (!fs.existsSync(item.dir)) return
-      let mp = pkg.cfg.common.mount
+      let mp = pkg.cfg.mount
       if (p.id !== 'app') mp += '/' + p.id
       if (k !== '' && k.substr(0, 1) !== '/') k = '/' + k
       mp += k
-      if ((pkg.cfg.common.disabled || []).indexOf(mp) > -1) {
+      if ((pkg.cfg.disabled || []).indexOf(mp) > -1) {
         helper('core:trace')(`|  |- Disabled => ${mp} -> ${helper('core:makeRelDir')(item.dir, cuk.dir.app, 'ADIR:.')}`)
         return
       }
